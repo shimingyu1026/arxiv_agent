@@ -11,6 +11,8 @@ import arxiv
 
 # ==================== 配置 ====================
 MOONSHOT_API_KEY = os.environ.get("MOONSHOT_API_KEY", "")
+MOONSHOT_BASE_URL = os.environ.get("MOONSHOT_BASE_URL", "https://api.moonshot.cn/v1")
+MODEL_NAME = os.environ.get("MODEL_NAME", "moonshot-v1-32k")
 EMAIL_USER = os.environ.get("EMAIL_USER", "")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
 EMAIL_TO = os.environ.get("EMAIL_TO", "")
@@ -105,13 +107,13 @@ def build_prompt(papers):
 
 def call_kimi(prompt: str) -> list:
     """调用 Moonshot API，返回 JSON list"""
-    url = "https://api.moonshot.cn/v1/chat/completions"
+    url = f"{MOONSHOT_BASE_URL}/chat/completions"
     headers = {
         "Authorization": f"Bearer {MOONSHOT_API_KEY}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": "moonshot-v1-32k",
+        "model": MODEL_NAME,
         "messages": [
             {
                 "role": "system",

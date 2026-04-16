@@ -30,12 +30,14 @@
 
 进入仓库 **Settings → Secrets and variables → Actions**，点击 **New repository secret**，添加以下 4 个 secret：
 
-| Secret 名称 | 说明 |
-|-------------|------|
-| `MOONSHOT_API_KEY` | 你的 Kimi API Key（从 [Moonshot 开放平台](https://platform.moonshot.cn/) 获取） |
-| `EMAIL_USER` | 发件 QQ 邮箱地址，例如 `123456789@qq.com` |
-| `EMAIL_PASSWORD` | **QQ 邮箱 SMTP 授权码**（不是 QQ 登录密码！在 QQ 邮箱设置 → 账户 → 开启 SMTP 后获取） |
-| `EMAIL_TO` | 收件地址，例如 `xxx@foxmail.com` |
+| Secret 名称 | 必填 | 说明 |
+|-------------|:--:|------|
+| `MOONSHOT_API_KEY` | ✅ | 你的 Kimi API Key（从 [Moonshot 开放平台](https://platform.moonshot.cn/) 获取） |
+| `MOONSHOT_BASE_URL` | ❌ | Kimi API Base URL，默认为 `https://api.moonshot.cn/v1` |
+| `MODEL_NAME` | ❌ | 使用的模型名称，默认为 `moonshot-v1-32k` |
+| `EMAIL_USER` | ✅ | 发件 QQ 邮箱地址，例如 `123456789@qq.com` |
+| `EMAIL_PASSWORD` | ✅ | **QQ 邮箱 SMTP 授权码**（不是 QQ 登录密码！在 QQ 邮箱设置 → 账户 → 开启 SMTP 后获取） |
+| `EMAIL_TO` | ✅ | 收件地址，例如 `xxx@foxmail.com` |
 
 ### 3. 手动测试
 
