@@ -30,7 +30,7 @@ def fetch_papers():
     """抓取 arxiv cs.AR 最近论文，优先取 24h 内，不足则放宽到 48h"""
     client = arxiv.Client(page_size=50, delay_seconds=3, num_retries=3)
     search = arxiv.Search(
-        query="cat:cs.AR",
+        query="cat:cs.AR OR cat:cs.RO",
         sort_by=arxiv.SortCriterion.SubmittedDate,
         sort_order=arxiv.SortOrder.Descending,
         max_results=MAX_RESULTS,
