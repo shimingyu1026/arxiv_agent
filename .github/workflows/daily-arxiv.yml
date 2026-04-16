@@ -25,6 +25,8 @@ jobs:
       - name: Run daily arxiv script
         env:
           MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+          MOONSHOT_BASE_URL: ${{ secrets.MOONSHOT_BASE_URL }}
+          MODEL_NAME: ${{ secrets.MODEL_NAME }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
