@@ -29,7 +29,7 @@ def _ensure_utc(dt: datetime) -> datetime:
 
 
 def fetch_papers():
-    """抓取 arxiv cs.AR 最近论文，优先取 24h 内，不足则放宽到 48h"""
+    """抓取 arxiv cs.AR 最近 24h 的论文"""
     client = arxiv.Client(page_size=50, delay_seconds=3, num_retries=3)
     search = arxiv.Search(
         query="cat:cs.AR OR cat:cs.RO",
@@ -41,14 +41,9 @@ def fetch_papers():
 
     now = datetime.now(timezone.utc)
     cutoff_24h = now - timedelta(hours=24)
-    cutoff_48h = now - timedelta(hours=48)
 
     papers_24h = [r for r in results if _ensure_utc(r.published) >= cutoff_24h]
-    if len(papers_24h) >= 3:
-        return papers_24h
-
-    papers_48h = [r for r in results if _ensure_utc(r.published) >= cutoff_48h]
-    return papers_48h
+    return papers_24h
 
 
 def build_prompt(papers):
