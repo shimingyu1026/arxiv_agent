@@ -292,7 +292,7 @@ def main():
     if not papers:
         send_alert_email(
             f"[Arxiv Daily] {today_str} | 今日暂无新论文",
-            "过去 48 小时内 cs.AR 类别没有新提交的论文。",
+            "过去 24 小时内 cs.AR OR cs.RO 类别没有新提交的论文。",
         )
         print("No papers found in 48h. Sent notice email.")
         return
