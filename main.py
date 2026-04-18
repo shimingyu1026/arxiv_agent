@@ -29,7 +29,7 @@ def _ensure_utc(dt: datetime) -> datetime:
 
 
 def fetch_papers():
-    """抓取 arxiv cs.AR 最近 24h 的论文"""
+    """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文"""
     client = arxiv.Client(page_size=50, delay_seconds=3, num_retries=3)
     search = arxiv.Search(
         query="cat:cs.AR OR cat:cs.RO",
@@ -158,7 +158,7 @@ def analyze_papers(papers):
                     {
                         "title": p.title,
                         "authors": authors,
-                        "arxiv_url": p.entry_id,
+                        "arxiv_url": p.entry_id.replace("http://", "https://"),
                         "summary": "（Kimi API 调用失败，未生成总结）",
                         "contributions": [],
                         "score": 0,
@@ -226,7 +226,7 @@ def build_email_html(analyzed, date_str):
     html = f"""
     <html>
       <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;color:#222;max-width:720px;margin:0 auto;padding:20px;">
-        <h2 style="color:#1a1a1a;">Arxiv Daily | {date_str}</h2>
+        <h2 style="color:#1a1a1a;">arXiv Daily | {date_str}</h2>
         <p style="font-size:14px;color:#555;">
           今日共 <b>{total}</b> 篇论文，其中 <b style="color:#ff4d4f;">{hl_count}</b> 篇与你关注的方向
           <span style="color:#888;">（{RESEARCH_AREAS}）</span>高度相关。
@@ -235,7 +235,7 @@ def build_email_html(analyzed, date_str):
         {other_section}
         <hr style="border:none;border-top:1px solid #eee;margin:30px 0;"/>
         <p style="font-size:12px;color:#aaa;text-align:center;">
-          由 Arxiv Daily Agent 自动生成 · <a href="https://github.com" style="color:#aaa;">GitHub Actions</a>
+          由 arXiv Daily Agent 自动生成 · <a href="https://github.com" style="color:#aaa;">GitHub Actions</a>
         </p>
       </body>
     </html>
@@ -257,12 +257,11 @@ def send_email(subject: str, html_body: str):
 
 
 def send_alert_email(subject: str, body: str):
-    """发送纯文本告警邮件"""
-    msg = MIMEMultipart("alternative")
+    """发送纯文本通知邮件"""
+    msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"] = subject
     msg["From"] = EMAIL_USER
     msg["To"] = EMAIL_TO
-    msg.attach(MIMEText(body, "plain", "utf-8"))
 
     with smtplib.SMTP_SSL("smtp.qq.com", 465, timeout=30) as server:
         server.login(EMAIL_USER, EMAIL_PASSWORD)
@@ -286,15 +285,15 @@ def main():
         papers = fetch_papers()
     except Exception as e:
         print(f"Fetch papers failed: {e}", file=sys.stderr)
-        send_alert_email(f"[Arxiv Daily] {today_str} 抓取失败", f"错误信息：{e}\n\n请检查 GitHub Actions 日志。")
+        send_alert_email(f"[arXiv Daily] {today_str} | 抓取失败", f"错误信息：{e}\n\n请检查 GitHub Actions 日志。")
         sys.exit(1)
 
     if not papers:
         send_alert_email(
-            f"[Arxiv Daily] {today_str} | 今日暂无新论文",
+            f"[arXiv Daily] {today_str} | 今日暂无新论文",
             "过去 24 小时内 cs.AR OR cs.RO 类别没有新提交的论文。",
         )
-        print("No papers found in 48h. Sent notice email.")
+        print("No papers found in 24h. Sent notice email.")
         return
 
     print(f"Fetched {len(papers)} papers.")
@@ -317,13 +316,13 @@ def main():
             authors = ", ".join([a.name for a in p.authors[:3]])
             fallback_html += f'<li><a href="{url}">{title}</a> — {authors}</li>'
         fallback_html += "</ul></body></html>"
-        send_email(f"[Arxiv Daily] {today_str} | {len(papers)} 篇论文", fallback_html)
+        send_email(f"[arXiv Daily] {today_str} | {len(papers)} 篇论文", fallback_html)
         return
 
     # 3. 构建邮件
     html_body = build_email_html(analyzed, today_str)
     hl_count = len([p for p in analyzed if p.get("highlight")])
-    subject = f"[Arxiv Daily] {today_str} | {len(analyzed)} 篇论文 · {hl_count} 篇高亮"
+    subject = f"[arXiv Daily] {today_str} | {len(analyzed)} 篇论文 · {hl_count} 篇高亮"
 
     # 4. 发送邮件
     try:

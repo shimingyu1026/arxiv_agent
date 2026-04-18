@@ -1,6 +1,6 @@
-# Arxiv Daily Agent
+# arXiv Daily Agent
 
-每天自动抓取 arxiv **计算机体系结构 (cs.AR)** 的最新论文，通过 **Kimi API** 智能总结并高亮与你研究方向相关的文章，最后推送到你的 QQ / Foxmail 邮箱。
+每天自动抓取 arXiv **计算机体系结构 (cs.AR)** 与 **机器人学 (cs.RO)** 的最新论文，通过 **Kimi API** 智能总结并高亮与你研究方向相关的文章，最后推送到你的 QQ / Foxmail 邮箱。
 
 **完全零本地部署**，基于 GitHub Actions 定时运行。
 
@@ -8,7 +8,7 @@
 
 ## ✨ 功能
 
-- 📰 每日自动抓取 `cs.AR` 最新论文（北京时间每天早上 8:00 推送）
+- 📰 每日自动抓取 `cs.AR` 与 `cs.RO` 最新论文（北京时间每天早上 8:00 推送）
 - 🤖 使用 Kimi (Moonshot) API 生成中文总结
 - 🔥 根据你的研究方向自动打分并高亮推荐：
   - AI 芯片
@@ -41,7 +41,7 @@
 
 ### 3. 手动测试
 
-进入仓库 **Actions → Daily Arxiv Digest**，点击 **Run workflow**，等几分钟后检查你的收件箱。
+进入仓库 **Actions → Daily arXiv Digest**，点击 **Run workflow**，等几分钟后检查你的收件箱。
 
 ### 4. 等待每日自动推送
 
@@ -57,7 +57,7 @@
 RESEARCH_AREAS = "AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI"
 ```
 
-如果你想扩展搜索的 arxiv 类别（比如同时关注 `cs.RO` 机器人），修改 `fetch_papers()` 中的 query：
+默认搜索范围已包含 `cs.AR` 与 `cs.RO`，如需调整，修改 `fetch_papers()` 中的 query：
 
 ```python
 query="cat:cs.AR OR cat:cs.RO",
@@ -72,7 +72,8 @@ query="cat:cs.AR OR cat:cs.RO",
 ├── .github/workflows/daily-arxiv.yml   # GitHub Actions 定时任务
 ├── main.py                              # 核心脚本（抓取 + 总结 + 发邮件）
 ├── requirements.txt                     # Python 依赖
-└── README.md                            # 本说明文档
+├── README.md                            # 本说明文档
+└── AGENTS.md                            # 面向 AI 助手的项目指南
 ```
 
 ---
@@ -80,7 +81,7 @@ query="cat:cs.AR OR cat:cs.RO",
 ## 💡 常见问题
 
 **Q: 每天大约消耗多少 Kimi API Token？**  
-A: `cs.AR` 通常一天 5–20 篇论文。每篇摘要约几百 Token，加上 Prompt，每天总消耗通常在 5k–30k Token 之间，订阅套餐完全够用。
+A: `cs.AR` 与 `cs.RO` 合计通常一天 5–20 篇论文。每篇摘要约几百 Token，加上 Prompt，每天总消耗通常在 5k–30k Token 之间，订阅套餐完全够用。
 
 **Q: 邮件进了垃圾箱怎么办？**  
 A: 在 QQ 邮箱或 foxmail 中把发件地址标记为"不是垃圾邮件"，或加入白名单。
@@ -90,4 +91,4 @@ A: 当前版本设计为"只发邮件不存档"，以保持仓库简洁。如果
 
 ---
 
-Enjoy your daily arxiv digest! 🎉
+Enjoy your daily arXiv digest! 🎉
