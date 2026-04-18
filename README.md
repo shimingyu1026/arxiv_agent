@@ -35,6 +35,7 @@
 | `MOONSHOT_API_KEY` | ✅ | 你的 Kimi API Key（从 [Moonshot 开放平台](https://platform.moonshot.cn/) 获取） |
 | `MOONSHOT_BASE_URL` | ❌ | Kimi API Base URL，默认为 `https://api.moonshot.cn/v1` |
 | `MODEL_NAME` | ❌ | 使用的模型名称，默认为 `moonshot-v1-32k` |
+| `RESEARCH_AREAS` | ❌ | 研究方向关键词，默认为 `AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI` |
 | `EMAIL_USER` | ✅ | 发件 QQ 邮箱地址，例如 `123456789@qq.com` |
 | `EMAIL_PASSWORD` | ✅ | **QQ 邮箱 SMTP 授权码**（不是 QQ 登录密码！在 QQ 邮箱设置 → 账户 → 开启 SMTP 后获取） |
 | `EMAIL_TO` | ✅ | 收件地址，例如 `xxx@foxmail.com` |
@@ -51,10 +52,10 @@
 
 ## ⚙️ 自定义配置
 
-如果你想调整研究方向或搜索类别，修改 `main.py` 顶部的常量即可：
+研究方向可通过环境变量 `RESEARCH_AREAS` 调整，无需修改代码。默认值：
 
-```python
-RESEARCH_AREAS = "AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI"
+```
+AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI
 ```
 
 默认搜索范围已包含 `cs.AR` 与 `cs.RO`，如需调整，修改 `fetch_papers()` 中的 query：

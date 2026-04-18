@@ -7,6 +7,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta, timezone
+import html
 import arxiv
 
 # ==================== 配置 ====================
@@ -17,7 +18,7 @@ EMAIL_USER = os.environ.get("EMAIL_USER", "")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
 EMAIL_TO = os.environ.get("EMAIL_TO", "")
 
-RESEARCH_AREAS = "AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI"
+RESEARCH_AREAS = os.environ.get("RESEARCH_AREAS", "AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI")
 MAX_RESULTS = 50
 BATCH_SIZE = 10
 
@@ -179,13 +180,13 @@ def build_email_html(analyzed, date_str):
     hl_count = len(highlights)
 
     def paper_card(p):
-        title = p.get("title", "")
-        authors = p.get("authors", "")
+        title = html.escape(p.get("title", ""))
+        authors = html.escape(p.get("authors", ""))
         url = p.get("arxiv_url", "")
-        summary = p.get("summary", "")
-        contributions = p.get("contributions", [])
+        summary = html.escape(p.get("summary", ""))
+        contributions = [html.escape(c) for c in p.get("contributions", [])]
         score = p.get("score", 0)
-        reason = p.get("reason", "")
+        reason = html.escape(p.get("reason", ""))
         is_hl = p.get("highlight", False)
 
         badge = f'<span style="background:#ff4d4f;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:8px;">🔥 推荐 {score}分</span>' if is_hl else ''
@@ -229,7 +230,7 @@ def build_email_html(analyzed, date_str):
         <h2 style="color:#1a1a1a;">arXiv Daily | {date_str}</h2>
         <p style="font-size:14px;color:#555;">
           今日共 <b>{total}</b> 篇论文，其中 <b style="color:#ff4d4f;">{hl_count}</b> 篇与你关注的方向
-          <span style="color:#888;">（{RESEARCH_AREAS}）</span>高度相关。
+          <span style="color:#888;">（{html.escape(RESEARCH_AREAS)}）</span>高度相关。
         </p>
         {hl_section}
         {other_section}
@@ -306,14 +307,14 @@ def main():
         # 整体降级：只发标题列表
         fallback_html = f"""
         <html><body>
-        <h2>Arxiv Daily | {today_str}</h2>
+        <h2>arXiv Daily | {today_str}</h2>
         <p style="color:red;">Kimi 总结服务暂时异常，今日仅提供论文列表：</p>
         <ul>
         """
         for p in papers:
             url = p.entry_id.replace("http://", "https://")
-            title = p.title
-            authors = ", ".join([a.name for a in p.authors[:3]])
+            title = html.escape(p.title)
+            authors = html.escape(", ".join([a.name for a in p.authors[:3]]))
             fallback_html += f'<li><a href="{url}">{title}</a> — {authors}</li>'
         fallback_html += "</ul></body></html>"
         send_email(f"[arXiv Daily] {today_str} | {len(papers)} 篇论文", fallback_html)
@@ -328,6 +329,15 @@ def main():
     try:
         send_email(subject, html_body)
         print(f"Email sent successfully: {subject}")
+
+        # 输出 GitHub Actions Summary
+        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            with open(summary_path, "a", encoding="utf-8") as f:
+                f.write(f"## arXiv Daily {today_str}\n\n")
+                f.write(f"- **抓取论文**：{len(papers)} 篇\n")
+                f.write(f"- **推荐关注**：{hl_count} 篇\n")
+                f.write(f"- **邮件主题**：{subject}\n")
     except Exception as e:
         print(f"Send email failed: {e}", file=sys.stderr)
         sys.exit(1)

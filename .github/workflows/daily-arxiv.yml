@@ -29,6 +29,7 @@ jobs:
           MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
           MOONSHOT_BASE_URL: ${{ secrets.MOONSHOT_BASE_URL }}
           MODEL_NAME: ${{ secrets.MODEL_NAME }}
+          RESEARCH_AREAS: ${{ secrets.RESEARCH_AREAS }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
