@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import re
+import time
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -30,15 +31,29 @@ def _ensure_utc(dt: datetime) -> datetime:
 
 
 def fetch_papers():
-    """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文"""
-    client = arxiv.Client(page_size=50, delay_seconds=3, num_retries=3)
+    """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文（带 429 限流重试）"""
+    client = arxiv.Client(page_size=50, delay_seconds=5, num_retries=3)
     search = arxiv.Search(
         query="cat:cs.AR OR cat:cs.RO",
         sort_by=arxiv.SortCriterion.SubmittedDate,
         sort_order=arxiv.SortOrder.Descending,
         max_results=MAX_RESULTS,
     )
-    results = list(client.results(search))
+
+    max_attempts = 3
+    results = []
+    for attempt in range(1, max_attempts + 1):
+        try:
+            results = list(client.results(search))
+            break
+        except Exception as e:
+            err_msg = str(e)
+            if ("429" in err_msg or "Too Many Requests" in err_msg) and attempt < max_attempts:
+                wait = 5 * attempt
+                print(f"arXiv 429 限流，{wait} 秒后重试... (第 {attempt}/{max_attempts} 次)", file=sys.stderr)
+                time.sleep(wait)
+            else:
+                raise
 
     now = datetime.now(timezone.utc)
     cutoff_24h = now - timedelta(hours=24)
