@@ -32,7 +32,7 @@ def _ensure_utc(dt: datetime) -> datetime:
 
 def fetch_papers():
     """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文（带 429 限流重试）"""
-    client = arxiv.Client(page_size=50, delay_seconds=5, num_retries=3)
+    client = arxiv.Client(page_size=50, delay_seconds=10, num_retries=0)
     search = arxiv.Search(
         query="cat:cs.AR OR cat:cs.RO",
         sort_by=arxiv.SortCriterion.SubmittedDate,
@@ -40,7 +40,7 @@ def fetch_papers():
         max_results=MAX_RESULTS,
     )
 
-    max_attempts = 3
+    max_attempts = 5
     results = []
     for attempt in range(1, max_attempts + 1):
         try:
@@ -49,7 +49,7 @@ def fetch_papers():
         except Exception as e:
             err_msg = str(e)
             if ("429" in err_msg or "Too Many Requests" in err_msg) and attempt < max_attempts:
-                wait = 5 * attempt
+                wait = 10 * (2 ** (attempt - 1))
                 print(f"arXiv 429 限流，{wait} 秒后重试... (第 {attempt}/{max_attempts} 次)", file=sys.stderr)
                 time.sleep(wait)
             else:
@@ -302,7 +302,8 @@ def main():
     except Exception as e:
         print(f"Fetch papers failed: {e}", file=sys.stderr)
         send_alert_email(f"[arXiv Daily] {today_str} | 抓取失败", f"错误信息：{e}\n\n请检查 GitHub Actions 日志。")
-        sys.exit(1)
+        # 外部 API 限流等不可控错误，已发送告警邮件，不再让 Actions 标红
+        return
 
     if not papers:
         send_alert_email(
