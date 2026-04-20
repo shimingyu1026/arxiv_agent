@@ -2,7 +2,7 @@ name: Daily arXiv Digest
 
 on:
   schedule:
-    - cron: "17 0 * * *"  # 每天 UTC 00:17，北京时间 08:17，避开整点高峰以减少 429 限流
+    - cron: "0 22 * * *"  # 每天 UTC 22:00，北京时间 06:00，预留 GitHub 排队延迟
   workflow_dispatch:  # 支持手动触发测试
 
 jobs:
