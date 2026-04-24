@@ -31,8 +31,9 @@ def _ensure_utc(dt: datetime) -> datetime:
 
 
 def fetch_papers():
-    """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文（带 429 限流重试）"""
-    client = arxiv.Client(page_size=50, delay_seconds=10, num_retries=0)
+    """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文（带限流/空结果重试）"""
+    # num_retries 恢复默认值 3，让 arxiv 库自行处理网络抖动
+    client = arxiv.Client(page_size=50, delay_seconds=10, num_retries=3)
     search = arxiv.Search(
         query="cat:cs.AR OR cat:cs.RO",
         sort_by=arxiv.SortCriterion.SubmittedDate,
@@ -45,7 +46,14 @@ def fetch_papers():
     for attempt in range(1, max_attempts + 1):
         try:
             results = list(client.results(search))
-            break
+            # arXiv API 存在已知的不稳定性：HTTP 200 但返回空 feed
+            # 如果结果为空且未到最大尝试次数，等待后重试
+            if results:
+                break
+            if attempt < max_attempts:
+                wait = 10 * (2 ** (attempt - 1))
+                print(f"arXiv 返回空结果，{wait} 秒后重试... (第 {attempt}/{max_attempts} 次)", file=sys.stderr)
+                time.sleep(wait)
         except Exception as e:
             err_msg = str(e)
             if ("429" in err_msg or "Too Many Requests" in err_msg) and attempt < max_attempts:
@@ -59,6 +67,7 @@ def fetch_papers():
     cutoff_24h = now - timedelta(hours=24)
 
     papers_24h = [r for r in results if _ensure_utc(r.published) >= cutoff_24h]
+    print(f"arXiv 原始返回 {len(results)} 篇，24h 内 {len(papers_24h)} 篇", file=sys.stderr)
     return papers_24h
 
 
