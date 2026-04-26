@@ -20,8 +20,10 @@ EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
 EMAIL_TO = os.environ.get("EMAIL_TO", "")
 
 RESEARCH_AREAS = os.environ.get("RESEARCH_AREAS", "AI芯片、机器人芯片、具身智能、Neuro-Symbolic AI")
-MAX_RESULTS = 50
+MAX_RESULTS = int(os.environ.get("MAX_RESULTS", "100"))
 BATCH_SIZE = 10
+DEFAULT_LOOKBACK_HOURS = 36
+MONDAY_CATCHUP_LOOKBACK_HOURS = 96
 
 
 def _ensure_utc(dt: datetime) -> datetime:
@@ -30,8 +32,24 @@ def _ensure_utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
+def _get_paper_lookback_hours(now: datetime | None = None) -> int:
+    configured = os.environ.get("PAPER_LOOKBACK_HOURS")
+    if configured:
+        lookback_hours = int(configured)
+        if lookback_hours <= 0:
+            raise ValueError("PAPER_LOOKBACK_HOURS must be a positive integer")
+        return lookback_hours
+
+    now = _ensure_utc(now or datetime.now(timezone.utc))
+    # GitHub Actions 默认在 UTC 22:00 运行。arXiv 的 published 时间通常是
+    # 前一天 UTC 17-18 点左右的提交时间，固定 24h 会错过当天公告的论文。
+    if now.weekday() == 0:
+        return MONDAY_CATCHUP_LOOKBACK_HOURS
+    return DEFAULT_LOOKBACK_HOURS
+
+
 def fetch_papers():
-    """抓取 arXiv cs.AR OR cs.RO 最近 24h 的论文（带限流/空结果重试）"""
+    """抓取 arXiv cs.AR OR cs.RO 最近窗口内的论文（带限流/空结果重试）"""
     # num_retries 恢复默认值 3，让 arxiv 库自行处理网络抖动
     client = arxiv.Client(page_size=50, delay_seconds=10, num_retries=3)
     search = arxiv.Search(
@@ -64,11 +82,12 @@ def fetch_papers():
                 raise
 
     now = datetime.now(timezone.utc)
-    cutoff_24h = now - timedelta(hours=24)
+    lookback_hours = _get_paper_lookback_hours(now)
+    cutoff = now - timedelta(hours=lookback_hours)
 
-    papers_24h = [r for r in results if _ensure_utc(r.published) >= cutoff_24h]
-    print(f"arXiv 原始返回 {len(results)} 篇，24h 内 {len(papers_24h)} 篇", file=sys.stderr)
-    return papers_24h
+    papers = [r for r in results if _ensure_utc(r.published) >= cutoff]
+    print(f"arXiv 原始返回 {len(results)} 篇，{lookback_hours}h 内 {len(papers)} 篇", file=sys.stderr)
+    return papers
 
 
 def build_prompt(papers):
@@ -315,11 +334,12 @@ def main():
         return
 
     if not papers:
+        lookback_hours = _get_paper_lookback_hours()
         send_alert_email(
             f"[arXiv Daily] {today_str} | 今日暂无新论文",
-            "过去 24 小时内 cs.AR OR cs.RO 类别没有新提交的论文。",
+            f"过去 {lookback_hours} 小时内 cs.AR OR cs.RO 类别没有新提交的论文。",
         )
-        print("No papers found in 24h. Sent notice email.")
+        print(f"No papers found in {lookback_hours}h. Sent notice email.")
         return
 
     print(f"Fetched {len(papers)} papers.")
