@@ -267,7 +267,7 @@ def build_email_html(analyzed, date_str):
         {cards}
         '''
 
-    html = f"""
+    html_content = f"""
     <html>
       <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;color:#222;max-width:720px;margin:0 auto;padding:20px;">
         <h2 style="color:#1a1a1a;">arXiv Daily | {date_str}</h2>
@@ -284,7 +284,7 @@ def build_email_html(analyzed, date_str):
       </body>
     </html>
     """
-    return html
+    return html_content
 
 
 def send_email(subject: str, html_body: str):
